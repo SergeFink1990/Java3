@@ -1,0 +1,30 @@
+public class Book {
+    private String title;
+    private String author;
+    private int year;
+    
+    public Book(String title, String author, int year) {
+        this.title = title;
+        this.author = author;
+        this.year = year;
+    }
+    
+    public String getTitle() { return title; }
+    public String getAuthor() { return author; }
+    public int getYear() { return year; }
+    
+    public void setTitle(String title) { this.title = title; }
+    public void setAuthor(String author) { this.author = author; }
+    public void setYear(int year) { this.year = year; }
+    
+    public void displayInfo() {
+        System.out.println("Название: " + title + ", Автор: " + author + ", Год: " + year);
+    }
+    
+    public static void main(String[] args) {
+        Book book1 = new Book("Заводной апельсин", "Бёрджес", 1962);
+        Book book2 = new Book("1984", "Оруэлл", 1948);
+        book1.displayInfo();
+        book2.displayInfo();
+    }
+}
