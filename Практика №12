@@ -1,0 +1,25 @@
+import java.time.LocalDate;
+import java.time.Period;
+import java.time.format.DateTimeFormatter;
+
+public class Main {
+    public static void main(String[] args) {
+        LocalDate today = LocalDate.now();
+        LocalDate birthDate = LocalDate.of(1995, 3, 15);
+        
+        Period age = Period.between(birthDate, today);
+        System.out.println("Возраст: " + age.getYears() + " лет");
+        
+        LocalDate nextBirthday = birthDate.withYear(today.getYear());
+        if (nextBirthday.isBefore(today)) {
+            nextBirthday = nextBirthday.plusYears(1);
+        }
+        Period untilNext = Period.between(today, nextBirthday);
+        System.out.println("Дней до следующего дня рождения: " + untilNext.getDays());
+        
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        System.out.println("Сегодня: " + today.format(formatter));
+        System.out.println("День рождения: " + birthDate.format(formatter));
+        System.out.println("Следующий день рождения: " + nextBirthday.format(formatter));
+    }
+}
