@@ -1,0 +1,34 @@
+public class Main {
+    public static void main(String[] args) {
+        int[] numbers = {10, 25, 7, 42, 18};
+        
+        System.out.print("Элементы массива: ");
+        for (int i = 0; i < numbers.length; i++) {
+            System.out.print(numbers[i] + " ");
+        }
+        System.out.println();
+        
+        int sum = 0;
+        for (int i = 0; i < numbers.length; i++) {
+            sum += numbers[i];
+        }
+        System.out.println("Сумма элементов: " + sum);
+        
+        int max = numbers[0];
+        for (int i = 1; i < numbers.length; i++) {
+            if (numbers[i] > max) {
+                max = numbers[i];
+            }
+        }
+        System.out.println("Максимальное значение: " + max);
+        
+        boolean found = false;
+        for (int i = 0; i < numbers.length; i++) {
+            if (numbers[i] == 42) {
+                found = true;
+                break;
+            }
+        }
+        System.out.println("Число 42 содержится в массиве: " + found);
+    }
+}
