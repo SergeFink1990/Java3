@@ -1,0 +1,33 @@
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Set;
+import java.util.Map;
+
+public class Main {
+    public static void main(String[] args) {
+        List<String> students = new ArrayList<>();
+        students.add("Юрий");
+        students.add("Авраам");
+        students.add("Эмма");
+        students.add("Юрий");
+        students.add("Зухра");
+        
+        System.out.println("Список студентов : " + students);
+        
+        Set<String> uniqueStudents = new HashSet<>(students);
+        System.out.println("Список студентов (без дубликатов): " + uniqueStudents);
+        
+        Map<String, Integer> studentScores = new HashMap<>();
+        studentScores.put("Юрий", 69);
+        studentScores.put("Авраам", 77);
+        studentScores.put("Эмма", 88);
+        studentScores.put("Зухра", 67);
+        
+        System.out.println("Оценки студентов:");
+        for (Map.Entry<String, Integer> entry : studentScores.entrySet()) {
+            System.out.println(entry.getKey() + ": " + entry.getValue() + " баллов");
+        }
+    }
+}
