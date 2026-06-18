@@ -1,0 +1,542 @@
+import java.io.*;
+import java.util.*;
+
+class CalculatorModel {
+    private List<HistoryEntry> history;
+    private String historyFilePath;
+    private static final String DEFAULT_HISTORY_FILE = "history.txt";
+
+    public CalculatorModel() {
+        this.history = new ArrayList<>();
+        this.historyFilePath = DEFAULT_HISTORY_FILE;
+        loadHistory();
+    }
+
+    public double calculate(String expression) throws Exception {
+        expression = expression.replaceAll("\\s+", "");
+        
+        if (!isValidExpression(expression)) {
+            throw new IllegalArgumentException("Некорректное выражение");
+        }
+
+        expression = expression.replace("**", "^");
+        double result = evaluateExpression(expression);
+        
+        addToHistory(expression, result);
+        return result;
+    }
+
+    private double evaluateExpression(String expression) throws Exception {
+        while (expression.contains("(")) {
+            int start = expression.lastIndexOf("(");
+            int end = expression.indexOf(")", start);
+            if (end == -1) {
+                throw new IllegalArgumentException("Несбалансированные скобки");
+            }
+            String subExpr = expression.substring(start + 1, end);
+            double result = evaluateSimpleExpression(subExpr);
+            expression = expression.substring(0, start) + result + expression.substring(end + 1);
+        }
+        return evaluateSimpleExpression(expression);
+    }
+
+    private double evaluateSimpleExpression(String expression) throws Exception {
+        expression = handleModuloAndIntegerDivision(expression);
+        expression = handlePower(expression);
+        expression = handleMultiplicationDivision(expression);
+        return handleAdditionSubtraction(expression);
+    }
+
+    private String handleModuloAndIntegerDivision(String expression) throws Exception {
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(-?\\d+(\\.\\d+)?)\\s*([/%][/%]?)\\s*(-?\\d+(\\.\\d+)?)");
+        java.util.regex.Matcher matcher = pattern.matcher(expression);
+        
+        while (matcher.find()) {
+            String match = matcher.group();
+            String operator = matcher.group(3);
+            double left = Double.parseDouble(matcher.group(1));
+            double right = Double.parseDouble(matcher.group(4));
+            
+            if (right == 0) {
+                throw new ArithmeticException("Деление на ноль");
+            }
+            
+            double result;
+            if (operator.equals("//")) {
+                result = Math.floor(left / right);
+                if (left < 0) {
+                    result = Math.ceil(left / right);
+                }
+            } else if (operator.equals("%")) {
+                result = left % right;
+            } else {
+                throw new Exception("Неизвестный оператор");
+            }
+            
+            expression = expression.replace(match, String.valueOf(result));
+        }
+        return expression;
+    }
+
+    private String handlePower(String expression) throws Exception {
+        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(-?\\d+(\\.\\d+)?)\\s*\\^\\s*(-?\\d+(\\.\\d+)?)");
+        java.util.regex.Matcher matcher = pattern.matcher(expression);
+        
+        while (matcher.find()) {
+            String match = matcher.group();
+            double base = Double.parseDouble(matcher.group(1));
+            double exponent = Double.parseDouble(matcher.group(3));
+            double result = Math.pow(base, exponent);
+            expression = expression.replace(match, String.valueOf(result));
+        }
+        return expression;
+    }
+
+    private String handleMultiplicationDivision(String expression) throws Exception {
+        String[] parts = expression.split("(?=[+\\-])");
+        StringBuilder result = new StringBuilder();
+        
+        for (String part : parts) {
+            if (part.contains("*") || part.contains("/")) {
+                String[] numbers = part.split("[*/]");
+                String[] operators = part.split("\\d+(\\.\\d+)?");
+                List<Double> values = new ArrayList<>();
+                List<String> ops = new ArrayList<>();
+                
+                for (String num : numbers) {
+                    if (!num.isEmpty()) {
+                        values.add(Double.parseDouble(num));
+                    }
+                }
+                
+                for (String op : operators) {
+                    if (op.equals("*") || op.equals("/")) {
+                        ops.add(op);
+                    }
+                }
+                
+                if (!values.isEmpty()) {
+                    double currentValue = values.get(0);
+                    for (int i = 0; i < ops.size(); i++) {
+                        double nextValue = values.get(i + 1);
+                        if (ops.get(i).equals("*")) {
+                            currentValue *= nextValue;
+                        } else if (ops.get(i).equals("/")) {
+                            if (nextValue == 0) {
+                                throw new ArithmeticException("Деление на ноль");
+                            }
+                            currentValue /= nextValue;
+                        }
+                    }
+                    result.append(currentValue);
+                } else {
+                    result.append(part);
+                }
+            } else {
+                result.append(part);
+            }
+        }
+        return result.toString();
+    }
+
+    private double handleAdditionSubtraction(String expression) throws Exception {
+        String[] parts = expression.split("(?=[+\\-])");
+        double result = 0.0;
+        boolean first = true;
+        
+        for (String part : parts) {
+            if (part.isEmpty()) continue;
+            double value = Double.parseDouble(part);
+            if (first) {
+                result = value;
+                first = false;
+            } else {
+                result += value;
+            }
+        }
+        return result;
+    }
+
+    private boolean isValidExpression(String expression) {
+        if (!expression.matches("[0-9+\\-*/^%().//\\s]+")) {
+            return false;
+        }
+        
+        int count = 0;
+        for (char c : expression.toCharArray()) {
+            if (c == '(') count++;
+            if (c == ')') count--;
+            if (count < 0) return false;
+        }
+        return count == 0;
+    }
+
+    private void addToHistory(String expression, double result) {
+        HistoryEntry entry = new HistoryEntry(expression, result);
+        history.add(entry);
+        saveHistory();
+    }
+
+    public List<HistoryEntry> getHistory() {
+        return new ArrayList<>(history);
+    }
+
+    public void clearHistory() {
+        history.clear();
+        saveHistory();
+    }
+
+    public void loadHistory() {
+        File file = new File(historyFilePath);
+        if (!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return;
+        }
+
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                HistoryEntry entry = HistoryEntry.fromString(line);
+                if (entry != null) {
+                    history.add(entry);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void saveHistory() {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(historyFilePath))) {
+            for (HistoryEntry entry : history) {
+                writer.write(entry.toString());
+                writer.newLine();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String saveHistoryToFile(String filePath) throws IOException {
+        if (filePath == null || filePath.trim().isEmpty()) {
+            saveHistory();
+            return new File(historyFilePath).getAbsolutePath();
+        }
+        
+        File file = new File(filePath);
+        
+        if (!filePath.contains(File.separator)) {
+            String ext = getFileExtension(filePath);
+            if (ext != null && (ext.equals("txt") || ext.equals("log") || ext.equals("md"))) {
+                file = new File(System.getProperty("user.dir"), filePath);
+            } else {
+                file = new File(System.getProperty("user.dir"), "log.log");
+            }
+        } else if (file.isDirectory() || !filePath.contains(".")) {
+            if (!filePath.endsWith(File.separator)) {
+                filePath += File.separator;
+            }
+            file = new File(filePath + "log.log");
+        }
+        
+        file.getParentFile().mkdirs();
+        
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            for (HistoryEntry entry : history) {
+                writer.write(entry.toString());
+                writer.newLine();
+            }
+        }
+        
+        return file.getAbsolutePath();
+    }
+
+    public String saveSelectedToFile(List<Integer> indices, String filePath) throws IOException {
+        if (indices == null || indices.isEmpty()) {
+            throw new IllegalArgumentException("Не выбрано ни одной записи");
+        }
+        
+        if (filePath == null || filePath.trim().isEmpty()) {
+            filePath = System.getProperty("user.dir") + File.separator + "selected_history.txt";
+        }
+        
+        File file = new File(filePath);
+        String ext = getFileExtension(filePath);
+        
+        if (!filePath.contains(File.separator)) {
+            if (ext != null && (ext.equals("txt") || ext.equals("log") || ext.equals("md"))) {
+                file = new File(System.getProperty("user.dir"), filePath);
+            } else {
+                file = new File(System.getProperty("user.dir"), "selected_history.txt");
+            }
+        } else if (file.isDirectory() || !filePath.contains(".")) {
+            if (!filePath.endsWith(File.separator)) {
+                filePath += File.separator;
+            }
+            file = new File(filePath + "selected_history.txt");
+        }
+        
+        file.getParentFile().mkdirs();
+        
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(file))) {
+            for (int index : indices) {
+                if (index >= 0 && index < history.size()) {
+                    writer.write(history.get(index).toString());
+                    writer.newLine();
+                }
+            }
+        }
+        
+        return file.getAbsolutePath();
+    }
+
+    private String getFileExtension(String filename) {
+        int dotIndex = filename.lastIndexOf(".");
+        if (dotIndex > 0 && dotIndex < filename.length() - 1) {
+            return filename.substring(dotIndex + 1).toLowerCase();
+        }
+        return null;
+    }
+
+    public String getHistoryFilePath() {
+        return new File(historyFilePath).getAbsolutePath();
+    }
+}
+
+class HistoryEntry {
+    private String expression;
+    private double result;
+
+    public HistoryEntry(String expression, double result) {
+        this.expression = expression;
+        this.result = result;
+    }
+
+    public String getExpression() { return expression; }
+    public double getResult() { return result; }
+
+    @Override
+    public String toString() {
+        return String.format("%s = %.6f", expression, result);
+    }
+
+    public static HistoryEntry fromString(String line) {
+        try {
+            int equalsIndex = line.lastIndexOf(" = ");
+            if (equalsIndex == -1) return null;
+            
+            String expression = line.substring(0, equalsIndex);
+            double result = Double.parseDouble(line.substring(equalsIndex + 3));
+            
+            return new HistoryEntry(expression, result);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+}
+
+class CalculatorView {
+    private Scanner scanner;
+
+    public CalculatorView() {
+        this.scanner = new Scanner(System.in);
+    }
+
+    public void showMenu() {
+        System.out.println("\n1. Произвести расчет уравнения");
+        System.out.println("2. Просмотреть историю вычислений");
+        System.out.println("3. Сохранить историю в файл");
+        System.out.println("4. Сохранить выбранные уравнения в файл");
+        System.out.println("5. Выход");
+        System.out.print("Выберите пункт: ");
+    }
+
+    public String getExpression() {
+        System.out.print("Введите выражение: ");
+        return scanner.nextLine();
+    }
+
+    public void showResult(String expression, double result) {
+        System.out.printf("Результат: %s = %.6f\n", expression, result);
+    }
+
+    public void showError(String message) {
+        System.err.println("Ошибка: " + message);
+    }
+
+    public void showHistory(List<HistoryEntry> history) {
+        if (history.isEmpty()) {
+            System.out.println("История пуста.");
+            return;
+        }
+        
+        System.out.println("\nID | Выражение = Результат");
+        System.out.println("----------------------------------------");
+        for (int i = 0; i < history.size(); i++) {
+            System.out.printf("%-3d| %s\n", i + 1, history.get(i).toString());
+        }
+    }
+
+    public String getFilePath(String purpose) {
+        System.out.print("Введите путь для " + purpose + " (Enter для пути по умолчанию): ");
+        return scanner.nextLine();
+    }
+
+    public void showFileSavedMessage(String path) {
+        System.out.println("Файл сохранен: " + path);
+    }
+
+    public String getSelectedIndices() {
+        System.out.print("Введите номера через запятую (например, 1,3,5): ");
+        return scanner.nextLine();
+    }
+
+    public void showMessage(String message) {
+        System.out.println(message);
+    }
+
+    public boolean confirmAction(String action) {
+        System.out.print("Подтвердить " + action + "? (y/n): ");
+        String response = scanner.nextLine().toLowerCase();
+        return response.equals("y") || response.equals("yes") || response.equals("д") || response.equals("да");
+    }
+}
+
+class CalculatorController {
+    private CalculatorModel model;
+    private CalculatorView view;
+    private boolean running;
+
+    public CalculatorController(CalculatorModel model, CalculatorView view) {
+        this.model = model;
+        this.view = view;
+        this.running = true;
+    }
+
+    public void run() {
+        while (running) {
+            view.showMenu();
+            String choice = view.getExpression();
+            processChoice(choice);
+        }
+    }
+
+    private void processChoice(String choice) {
+        try {
+            switch (choice.trim()) {
+                case "1":
+                    handleCalculate();
+                    break;
+                case "2":
+                    handleViewHistory();
+                    break;
+                case "3":
+                    handleSaveHistory();
+                    break;
+                case "4":
+                    handleSaveSelected();
+                    break;
+                case "5":
+                    handleExit();
+                    break;
+                default:
+                    view.showError("Неверный выбор. Выберите 1-5.");
+            }
+        } catch (Exception e) {
+            view.showError(e.getMessage());
+        }
+    }
+
+    private void handleCalculate() {
+        String expression = view.getExpression();
+        try {
+            double result = model.calculate(expression);
+            view.showResult(expression, result);
+        } catch (Exception e) {
+            view.showError("Ошибка вычисления: " + e.getMessage());
+        }
+    }
+
+    private void handleViewHistory() {
+        List<HistoryEntry> history = model.getHistory();
+        view.showHistory(history);
+    }
+
+    private void handleSaveHistory() {
+        String filePath = view.getFilePath("сохранения полной истории");
+        try {
+            String savedPath = model.saveHistoryToFile(filePath);
+            view.showFileSavedMessage(savedPath);
+        } catch (IOException e) {
+            view.showError("Ошибка сохранения: " + e.getMessage());
+        }
+    }
+
+    private void handleSaveSelected() {
+        List<HistoryEntry> history = model.getHistory();
+        if (history.isEmpty()) {
+            view.showMessage("История пуста. Нечего сохранять.");
+            return;
+        }
+        
+        view.showHistory(history);
+        String indicesInput = view.getSelectedIndices();
+        
+        try {
+            List<Integer> indices = parseIndices(indicesInput);
+            if (indices.isEmpty()) {
+                view.showError("Нет валидных номеров.");
+                return;
+            }
+            
+            String filePath = view.getFilePath("сохранения выбранных записей");
+            String savedPath = model.saveSelectedToFile(indices, filePath);
+            view.showFileSavedMessage(savedPath);
+        } catch (NumberFormatException e) {
+            view.showError("Неверный формат номеров.");
+        } catch (IllegalArgumentException e) {
+            view.showError(e.getMessage());
+        } catch (IOException e) {
+            view.showError("Ошибка сохранения: " + e.getMessage());
+        }
+    }
+
+    private void handleExit() {
+        if (view.confirmAction("выход")) {
+            view.showMessage("До свидания!");
+            running = false;
+        }
+    }
+
+    private List<Integer> parseIndices(String input) {
+        List<Integer> indices = new ArrayList<>();
+        if (input == null || input.trim().isEmpty()) {
+            return indices;
+        }
+        
+        String[] parts = input.split(",");
+        for (String part : parts) {
+            try {
+                int index = Integer.parseInt(part.trim()) - 1;
+                if (index >= 0 && index < model.getHistory().size()) {
+                    indices.add(index);
+                }
+            } catch (NumberFormatException e) {
+            }
+        }
+        return indices;
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        CalculatorModel model = new CalculatorModel();
+        CalculatorView view = new CalculatorView();
+        CalculatorController controller = new CalculatorController(model, view);
+        controller.run();
+    }
+}
