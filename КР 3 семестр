@@ -1,0 +1,215 @@
+import java.util.Scanner;
+
+public class Matrix {
+    private int[][] data;
+    private int rows;
+    private int cols;
+
+    public Matrix(int rows, int cols) {
+        this.rows = rows;
+        this.cols = cols;
+        this.data = new int[rows][cols];
+    }
+
+    public void setValue(int row, int col, int value) {
+        data[row][col] = value;
+    }
+
+    public int getValue(int row, int col) {
+        return data[row][col];
+    }
+
+    public void inputMatrix(Scanner scanner, String name) {
+        System.out.println("ВВОД МАТРИЦЫ " + name);
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                System.out.print("Элемент [" + i + "][" + j + "]: ");
+                data[i][j] = scanner.nextInt();
+            }
+        }
+    }
+
+    public void displayMatrix(String name) {
+        System.out.println("МАТРИЦА " + name);
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                System.out.print(data[i][j] + " ");
+            }
+            System.out.println();
+        }
+    }
+
+    public Matrix add(Matrix other) {
+        Matrix result = new Matrix(rows, cols);
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                result.data[i][j] = this.data[i][j] + other.data[i][j];
+            }
+        }
+        return result;
+    }
+
+    public Matrix subtract(Matrix other) {
+        Matrix result = new Matrix(rows, cols);
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                result.data[i][j] = this.data[i][j] - other.data[i][j];
+            }
+        }
+        return result;
+    }
+
+    public Matrix multiply(Matrix other) {
+        Matrix result = new Matrix(this.rows, other.cols);
+        for (int i = 0; i < this.rows; i++) {
+            for (int j = 0; j < other.cols; j++) {
+                int sum = 0;
+                for (int k = 0; k < this.cols; k++) {
+                    sum += this.data[i][k] * other.data[k][j];
+                }
+                result.data[i][j] = sum;
+            }
+        }
+        return result;
+    }
+
+    public void printMatrix() {
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < cols; j++) {
+                System.out.print(data[i][j] + " ");
+            }
+            System.out.println();
+        }
+    }
+
+    public void printColumn(int col) {
+        for (int i = 0; i < rows; i++) {
+            System.out.println(data[i][col]);
+        }
+    }
+
+    public void printRow(int row) {
+        for (int j = 0; j < cols; j++) {
+            System.out.print(data[row][j] + " ");
+        }
+        System.out.println();
+    }
+
+    public void printMainDiagonal() {
+        int n = Math.min(rows, cols);
+        for (int i = 0; i < n; i++) {
+            System.out.print(data[i][i] + " ");
+        }
+        System.out.println();
+    }
+
+    public void printSecondaryDiagonal() {
+        int n = Math.min(rows, cols);
+        for (int i = 0; i < n; i++) {
+            System.out.print(data[i][n - 1 - i] + " ");
+        }
+        System.out.println();
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        
+        System.out.println("ПРОГРАММА РАБОТЫ С МАТРИЦАМИ");
+        System.out.println("Введите размеры матриц");
+        
+        System.out.print("Количество строк: ");
+        int rows = scanner.nextInt();
+        
+        System.out.print("Количество столбцов: ");
+        int cols = scanner.nextInt();
+        
+        Matrix matrix1 = new Matrix(rows, cols);
+        Matrix matrix2 = new Matrix(rows, cols);
+        
+        matrix1.inputMatrix(scanner, "A");
+        matrix2.inputMatrix(scanner, "B");
+        
+        matrix1.displayMatrix("A");
+        matrix2.displayMatrix("B");
+        
+        System.out.println("РЕЗУЛЬТАТЫ ОПЕРАЦИЙ");
+        
+        System.out.println("1. СЛОЖЕНИЕ МАТРИЦ");
+        System.out.println("Матрица A + Матрица B = ");
+        Matrix sum = matrix1.add(matrix2);
+        sum.printMatrix();
+        
+        System.out.println("Печать столбцов матрицы суммы:");
+        for (int j = 0; j < cols; j++) {
+            System.out.println("Столбец " + j + ":");
+            sum.printColumn(j);
+        }
+        
+        System.out.println("Печать строк матрицы суммы:");
+        for (int i = 0; i < rows; i++) {
+            System.out.println("Строка " + i + ":");
+            sum.printRow(i);
+        }
+        
+        System.out.println("Диагонали матрицы суммы:");
+        System.out.print("Главная диагональ: ");
+        sum.printMainDiagonal();
+        System.out.print("Побочная диагональ: ");
+        sum.printSecondaryDiagonal();
+        
+        System.out.println("2. ВЫЧИТАНИЕ МАТРИЦ");
+        System.out.println("Матрица A - Матрица B = ");
+        Matrix diff = matrix1.subtract(matrix2);
+        diff.printMatrix();
+        
+        System.out.println("Печать столбцов матрицы разности:");
+        for (int j = 0; j < cols; j++) {
+            System.out.println("Столбец " + j + ":");
+            diff.printColumn(j);
+        }
+        
+        System.out.println("Печать строк матрицы разности:");
+        for (int i = 0; i < rows; i++) {
+            System.out.println("Строка " + i + ":");
+            diff.printRow(i);
+        }
+        
+        System.out.println("Диагонали матрицы разности:");
+        System.out.print("Главная диагональ: ");
+        diff.printMainDiagonal();
+        System.out.print("Побочная диагональ: ");
+        diff.printSecondaryDiagonal();
+        
+        System.out.println("3. УМНОЖЕНИЕ МАТРИЦ");
+        if (matrix1.cols == matrix2.rows) {
+            System.out.println("Матрица A * Матрица B = ");
+            Matrix product = matrix1.multiply(matrix2);
+            product.printMatrix();
+            
+            System.out.println("Печать столбцов матрицы произведения:");
+            for (int j = 0; j < product.cols; j++) {
+                System.out.println("Столбец " + j + ":");
+                product.printColumn(j);
+            }
+            
+            System.out.println("Печать строк матрицы произведения:");
+            for (int i = 0; i < product.rows; i++) {
+                System.out.println("Строка " + i + ":");
+                product.printRow(i);
+            }
+            
+            System.out.println("Диагонали матрицы произведения:");
+            System.out.print("Главная диагональ: ");
+            product.printMainDiagonal();
+            System.out.print("Побочная диагональ: ");
+            product.printSecondaryDiagonal();
+        } else {
+            System.out.println("Умножение невозможно");
+            System.out.println("Количество столбцов матрицы A (" + matrix1.cols + 
+                             ") не равно количеству строк матрицы B (" + matrix2.rows + ")");
+        }
+        
+        scanner.close();
+        System.out.println("КОНЕЦ");
+    }
+}
