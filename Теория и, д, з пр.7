@@ -1,0 +1,43 @@
+class Main {
+    public static void main(String[] args) {
+        double[] pA = {0.18,0.42,0.25,0.15};
+        double[][] pBgivenA = {{0.96,0.03,0.01,0.00},{0.03,0.95,0.02,0.00},{0.00,0.01,0.97,0.02},{0.00,0.00,0.02,0.98}};
+        
+        double tau = 0.01;
+        double n = 1.0/tau;
+        
+        System.out.println("1. Исходные параметры канала");
+        System.out.printf("τ (время передачи) = %.3f\n", tau);
+        System.out.printf("n (скорость, 1/τ) = %.0f\n\n", n);
+        
+        double[][] pAB = new double[4][4];
+        for (int i=0;i<4;i++) for (int j=0;j<4;j++) pAB[i][j]=pA[i]*pBgivenA[i][j];
+        
+        double[] pB = new double[4];
+        for (int j=0;j<4;j++) for (int i=0;i<4;i++) pB[j]+=pAB[i][j];
+        
+        System.out.println("2. Матрица совместных вероятностей P(A,B)");
+        System.out.println("          b1      b2      b3      b4");
+        for (int i=0;i<4;i++) {
+            System.out.print("a" + (i+1) + "     ");
+            for (int j=0;j<4;j++) System.out.printf("%.4f  ", pAB[i][j]);
+            System.out.println();
+        }
+        System.out.print("Сумма p(bj) ");
+        for (int j=0;j<4;j++) System.out.printf("%.4f  ", pB[j]);
+        System.out.println("\n");
+        
+        double hA=0,hB=0,hBgivenA=0;
+        for (int i=0;i<4;i++) if (pA[i]>0) hA += -pA[i]*log2(pA[i]);
+        for (int j=0;j<4;j++) if (pB[j]>0) hB += -pB[j]*log2(pB[j]);
+        for (int i=0;i<4;i++) for (int j=0;j<4;j++) if (pA[i]>0 && pBgivenA[i][j]>0) hBgivenA += -pA[i]*pBgivenA[i][j]*log2(pBgivenA[i][j]);
+        
+        double C = n * (hB - hBgivenA);
+        
+        System.out.println("3. Итоговый расчет энтропий и пропускной способности");
+        System.out.printf("Энтропия источника H(A) = %.4f\n", hA);
+        System.out.printf("Условная энтропия H(B|A) = %.4f\n", hBgivenA);
+        System.out.printf("Пропускная способность C = %.4f\n", C);
+    }
+    private static double log2(double x) { return Math.log(x)/Math.log(2); }
+}
