@@ -1,0 +1,47 @@
+import java.util.Random;
+
+public class Main {
+    public static void main(String[] args) {
+        int[] arr = new int[10];
+        Random rand = new Random();
+        for (int i = 0; i < arr.length; i++) {
+            arr[i] = rand.nextInt(100);
+        }
+        int min = arr[0];
+        int max = arr[0];
+        for (int i = 1; i < arr.length; i++) {
+            if (arr[i] < min) min = arr[i];
+            if (arr[i] > max) max = arr[i];
+        }
+        System.out.println("Min: " + min + ", Max: " + max);
+        int size = 5;
+        int[][] matrix = new int[size][size];
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                if (i == j) matrix[i][j] = 1;
+            }
+        }
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                System.out.print(matrix[i][j] + " ");
+            }
+            System.out.println();
+        }
+        int rows = 6;
+        int[][] pascal = new int[rows][];
+        for (int i = 0; i < rows; i++) {
+            pascal[i] = new int[i + 1];
+            pascal[i][0] = 1;
+            pascal[i][i] = 1;
+            for (int j = 1; j < i; j++) {
+                pascal[i][j] = pascal[i - 1][j - 1] + pascal[i - 1][j];
+            }
+        }
+        for (int i = 0; i < rows; i++) {
+            for (int j = 0; j < pascal[i].length; j++) {
+                System.out.print(pascal[i][j] + " ");
+            }
+            System.out.println();
+        }
+    }
+}
