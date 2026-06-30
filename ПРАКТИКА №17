@@ -1,0 +1,16 @@
+import java.util.HashMap;
+
+public class Main {
+    public static void main(String[] args) {
+        HashMap<String, Integer> journal = new HashMap<>();
+        journal.put("Равшан", 85);
+        journal.put("Джамшут", 92);
+        journal.put("Мария", 78);
+        journal.put("Дмитрий", 95);
+        journal.put("Евпатий", 100);
+        System.out.println("Оценка студента Равшан: " + journal.get("Равшан"));
+        System.out.println("Студент Иван есть в журнале? " + journal.containsKey("Иван"));
+        journal.remove("Дмитрий");
+        System.out.println("Оставшиеся студенты: " + journal);
+    }
+}
