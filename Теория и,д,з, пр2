@@ -1,0 +1,57 @@
+class Main {
+    public static void main(String[] args) {
+        double[] pA = {0.34, 0.08, 0.26, 0.32};
+        int[][] freq = {{149,1,0,0},{2,146,0,2},{0,14,136,0},{0,1,2,147}};
+        
+        System.out.println("1. Исходные данные (Частоты из 150) [ист: 13]");
+        System.out.println("        b1   b2   b3   b4");
+        for (int i=0;i<4;i++) {
+            System.out.print("a" + (i+1) + "     ");
+            for (int j=0;j<4;j++) System.out.print(freq[i][j] + "    ");
+            System.out.println();
+        }
+        System.out.println();
+        
+        double[][] pBgivenA = new double[4][4];
+        for (int i=0;i<4;i++) for (int j=0;j<4;j++) pBgivenA[i][j]=freq[i][j]/150.0;
+        
+        double[][] pAB = new double[4][4];
+        for (int i=0;i<4;i++) for (int j=0;j<4;j++) pAB[i][j]=pA[i]*pBgivenA[i][j];
+        
+        double[] pB = new double[4];
+        for (int j=0;j<4;j++) for (int i=0;i<4;i++) pB[j]+=pAB[i][j];
+        
+        System.out.println("2. Матрица совместных вероятностей P(A,B) [ист: 13, 15]");
+        System.out.println("          b1      b2      b3      b4");
+        for (int i=0;i<4;i++) {
+            System.out.print("a" + (i+1) + "     ");
+            for (int j=0;j<4;j++) System.out.printf("%.4f  ", pAB[i][j]);
+            System.out.println();
+        }
+        System.out.print("Сумма (p(bj)) ");
+        for (int j=0;j<4;j++) System.out.printf("%.4f  ", pB[j]);
+        System.out.println("\n");
+        
+        double hA=0,hBgivenA=0,hB=0,hAB=0;
+        for (int i=0;i<4;i++) if (pA[i]>0) hA += -pA[i]*log2(pA[i]);
+        for (int i=0;i<4;i++) for (int j=0;j<4;j++) if (pAB[i][j]>0 && pBgivenA[i][j]>0) hBgivenA += -pAB[i][j]*log2(pBgivenA[i][j]);
+        for (int j=0;j<4;j++) if (pB[j]>0) hB += -pB[j]*log2(pB[j]);
+        for (int i=0;i<4;i++) for (int j=0;j<4;j++) if (pAB[i][j]>0) hAB += -pAB[i][j]*log2(pAB[i][j]);
+        double hAgivenB = hAB - hB;
+        
+        System.out.println("3. Итоговый расчет энтропий и информационных потерь (для n=500) [ист: 11, 12, 14, 15]");
+        System.out.printf("Энтропия источника H(A) = %.4f\n", hA);
+        System.out.printf("Условная энтропия H(B|A) = %.4f\n", hBgivenA);
+        System.out.printf("Энтропия выхода H(B) = %.4f\n", hB);
+        System.out.printf("Энтропия объединения H(A,B) = %.4f\n", hAB);
+        System.out.printf("Условная энтропия H(A|B) = %.4f\n", hAgivenB);
+        
+        int n=500;
+        double dI = n*hAgivenB;
+        double I = n*hB - dI;
+        System.out.println("Передано символов n = " + n);
+        System.out.printf("Информационные потери dI = %.4f\n", dI);
+        System.out.printf("Принятая информация I = %.4f\n", I);
+    }
+    private static double log2(double x) { return Math.log(x)/Math.log(2); }
+}
